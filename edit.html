@@ -1,0 +1,40 @@
+<h4 class="mt-2">Editar</h4>
+
+<div class="edit-form row g-3">
+
+  <div class="form-group col-2">
+    <label for="func-id">ID</label>
+    <input type="text" class="form-control" id="func-id" disabled readonly>
+  </div>
+  
+  <div class="form-group col-10">
+    <label for="nome">Nome</label>
+    <input type="text" class="form-control" id="nome">
+  </div>
+
+  <div class="form-group col-6">
+    <label for="cpf">CPF</label>
+    <input type="number" class="form-control" id="cpf">
+  </div>
+
+  <div class="form-group col-6">
+    <label for="cargo">Cargo</label>
+    <select id="cargo" class="form-select">
+      <option selected>cargo...</option>
+      <option value="Administrativo">Administrativo</option>
+      <option value="ASG">ASG</option>
+      <option value="Enfermagem">Enfermagem</option>
+      <option value="Recepção">Recepção</option>
+      <option value="Telefonia">Telefonia</option>
+    </select>
+  </div>
+
+  <div>
+    <button class="form-group btn btn-primary" id="save-changes">Atualizar</button>
+    <button class="form-group btn btn-primary" id="cancel-changes">Cancelar</button>
+  </div>
+</div>
+
+<div class="alert alert-success invisible mt-2" id="save-success-mesage" role="alert">
+  Alteração realizada com sucesso!
+</div>

@@ -1,0 +1,46 @@
+<h4 class="mt-2">Buscar</h4>
+<div class="edit-form row g-3">
+  <div class="form-group mb-3">
+    
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" id="searchInput" placeholder="buscar...">
+      <span class="input-group-text" id="searchCounter"></span>
+    </div>
+
+    
+  </div>
+
+  <div>
+    <table class="table table-hover table-sm">
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Nome</th>
+          <th scope="col">CPF</th>
+          <th scope="col">Cargo</th>
+          <th scope="col"></th>
+          <th scope="col"></th>
+        </tr>
+      </thead>
+      <tbody id="searchResults">
+        
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<template id="rowTemplate"> 
+  <tr class="result-box">
+    <th class="funcID" scope="row"></th>
+    <td class="nome"></td>
+    <td class="cpf"></td>
+    <td class="cargo"></td>
+    <td class="text-center"><button type="button" class="btn btn-outline-dark edit-button btn-sm">Editar</button></td>
+    <td class="text-center">
+      <div class="btn-group" role="group">
+        <button type="button" class="btn btn-danger delete-button d-none btn-sm">Excluir</button>
+        <button type="button" class="btn btn-outline-dark before-delete-button btn-sm" data-button-state="delete">Excluir</button>
+      </div>
+    </td>
+  </tr>
+</template>

@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <style>
+      .nav-link {
+        cursor:pointer;
+      }
+      #loading {
+        position:fixed;
+        top:0;
+        left:0;
+        z-index:1000;
+        width:100vw;
+        height:100vh;
+        background-color:rgba(255,255,255,0.9);
+      }
+    </style>
+
+  </head>
+  <body>
+    
+    <div class="container">
+      
+        <nav id="navigation">
+          <ul class="nav nav-tabs main-nav">
+            <li class="nav-item">
+              <div class="nav-link active" id="search-link">Pesquisar funcionário</div>
+            </li>
+            <li class="nav-item">
+              <div class="nav-link"  id="add-link">Inserir novo funcionário</div>
+            </li>
+          </ul>
+          
+        </nav>
+      
+      <div id="app"></div>
+    
+    </div> 
+    <div id="loading" class="d-flex justify-content-center align-items-center invisible">
+      <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+      
+     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+    <script>
+      
+      var data;
+
+      function loadView(options){
+        var id = typeof options.id === "undefined" ? "app" : options.id;
+        var cb = typeof options.callback === "undefined" ? function(){} : options.callback;
+        loadingStart();
+        google.script.run.withSuccessHandler(function(html){
+          document.getElementById(id).innerHTML = html;
+          loadingEnd();
+          typeof options.params === "undefined" ? cb() : cb(options.params);
+        })[options.func]();
+      }
+
+      function setDataForSearch(){
+        loadingStart();
+        google.script.run.withSuccessHandler(function(dataReturned){
+          data = dataReturned.slice();
+          loadingEnd();
+        }).getDataForSearch();
+      }
+
+      function search(){
+        var searchInput = document.getElementById("searchInput").value.toString().toLowerCase();
+        var searchWords = searchInput.split(/\s+/);
+        var searchColumns = [1,2,3];
+        var resultsArray = searchInput === "" ? [] : data.filter(function(r){
+          return searchWords.every(function(word){
+            return searchColumns.some(function(colIndex){
+              return r[colIndex].toString().toLowerCase().indexOf(word) !== -1
+            });
+          });
+        });
+
+        var recordCount = searchInput === "" ? "" : "Contagem: " + resultsArray.length;
+        document.getElementById("searchCounter").textContent = recordCount;
+
+        var searchResultsBox = document.getElementById("searchResults");
+        var templateBox = document.getElementById("rowTemplate");
+        var template = templateBox.content;
+
+        searchResultsBox.innerHTML = "";
+
+        resultsArray.forEach(function(r){
+          var tr = template.cloneNode(true);
+          var funcIDColumn = tr.querySelector(".funcID");
+          var nomeColumn = tr.querySelector(".nome");
+          var cpfColumn = tr.querySelector(".cpf");
+          var cargoColumn = tr.querySelector(".cargo");
+          var deleteButton = tr.querySelector(".delete-button");
+          var editButton = tr.querySelector(".edit-button");
+
+          funcIDColumn.textContent = r[0];
+          deleteButton.dataset.funID = r[0];
+          editButton.dataset.funID = r[0];
+          nomeColumn.textContent = r[1];
+          cpfColumn.textContent = r[2];
+          cargoColumn.textContent = r[3];
+
+          searchResultsBox.appendChild(tr);
+        });
+      }
+
+      function displayConfirmationDelete(e){
+        if(e.target.dataset.buttonState === "delete"){
+          e.target.previousElementSibling.classList.remove("d-none");
+          e.target.textContent = "Cancelar";
+          e.target.dataset.buttonState = "cancel";
+        } else {
+          e.target.previousElementSibling.classList.add("d-none");
+          e.target.textContent = "Excluir";
+          e.target.dataset.buttonState = "delete";
+        }
+      }
+
+      function deleteFunc(e){
+        var funcID = e.target.dataset.funID;
+        loadingStart();
+        google.script.run.withSuccessHandler(function(){
+          e.target.closest(".result-box").remove();
+          var ids = data.map(function(r){return r[0].toString().toLowerCase()});
+          var index = ids.indexOf(funcID.toString().toLowerCase());
+          data.splice(index,1);
+          loadingEnd();
+        }).deleteById(funcID);
+      }
+
+      function afterEditViewLoads(params){
+        loadingStart();
+        document.getElementById('func-id').value = params.funID;
+        google.script.run.withSuccessHandler(function(funcInfo){
+          document.getElementById('nome').value = funcInfo.nome;
+          document.getElementById('cpf').value = funcInfo.cpf;
+          document.getElementById('cargo').value = funcInfo.cargo;
+          loadingEnd();
+        }).getFuncById(params.funID);
+      }
+
+      function editFunc(){
+        loadingStart();
+        var funcInfo = {};
+        funcInfo.nome = document.getElementById('nome').value;
+        funcInfo.cpf = document.getElementById('cpf').value;
+        funcInfo.cargo = document.getElementById('cargo').value;
+
+        var id = document.getElementById('func-id').value;
+        
+        google.script.run.withSuccessHandler(function(res){
+          document.getElementById('save-success-mesage').classList.remove("invisible");
+          loadingEnd();
+          setTimeout(function(){
+            document.getElementById('save-success-mesage').classList.add("invisible");
+          },2000);
+        }).editFuncById(id,funcInfo);
+      }
+
+      function addFunc(){
+        loadingStart();
+        var funcInfo = {};
+        funcInfo.nome = document.getElementById('nome').value;
+        funcInfo.cpf = document.getElementById('cpf').value;
+        funcInfo.cargo = document.getElementById('cargo').value;
+        google.script.run.withSuccessHandler(function(){
+          document.getElementById('nome').value="";
+          document.getElementById('cpf').value="";
+          document.getElementById('cargo').value="";
+          document.getElementById('save-success-mesage').classList.remove("invisible");
+          loadingEnd();
+          setTimeout(function(){
+            document.getElementById('save-success-mesage').classList.add("invisible");
+          },2000);
+        }).addFunc(funcInfo);
+      }
+
+      function loadSearchViews(){
+        loadView({func:"loadSearchView", callback: setDataForSearch});
+      }
+
+      function loadAddViews(){
+        loadView({func:"loadAddView"});
+      }
+
+      function loadEditViews(e){
+        loadView({func:"loadEditView", callback: afterEditViewLoads, params: {funID: e.target.dataset.funID} });
+        //loadView({func:"loadEditView"});
+      }
+
+      function activeTabChange(e){
+        var navLinks = document.querySelectorAll(".main-nav .nav-link");
+        navLinks.forEach(function(linkEl){
+          linkEl.classList.remove("active");
+        });
+        e.target.classList.add("active");
+      }
+
+      function loadingStart(){
+        document.getElementById("loading").classList.remove("invisible");
+      }
+
+      function loadingEnd(){
+        document.getElementById("loading").classList.add("invisible");
+      }
+
+      document.getElementById('search-link').addEventListener('click', loadSearchViews);
+      document.getElementById('add-link').addEventListener('click', loadAddViews);
+      //document.getElementById('home-link').addEventListener('click', loadEditViews);
+
+      function inputEventHandler(e){
+        if(e.target.matches("#searchInput")){
+          search();
+        }
+      }
+
+      function clickEventHandler(e){
+        if(e.target.matches(".delete-button")){
+          deleteFunc(e);
+        }
+        if(e.target.matches(".before-delete-button")){
+          displayConfirmationDelete(e);
+        }
+        if(e.target.matches(".edit-button")){
+          loadEditViews(e);
+        //  loadView({func:"loadEditView", callback: afterEditViewLoads, //params: {funID: e.target.dataset.funID} });
+        }
+        if(e.target.matches("#save-changes")){
+          editFunc();
+        }
+        if(e.target.matches("#cancel-changes")){
+          loadSearchViews();
+        }
+        if(e.target.matches("#add-func-button")){
+          addFunc();
+        }
+        
+      }
+
+      function navClickEventHandler(e){
+        if(e.target.matches(".nav-link")){
+          activeTabChange(e);
+        }
+      }
+
+      document.getElementById('app').addEventListener('input', inputEventHandler);
+      document.getElementById('app').addEventListener('click', clickEventHandler);
+      document.getElementById('navigation').addEventListener('click', navClickEventHandler);
+      document.addEventListener("DOMContentLoaded",loadSearchViews);
+
+    </script>
+
+  </body>
+</html>
