@@ -9,7 +9,7 @@ function loadMainForm() {
 
 function createMenu_(){
   const ui = SpreadsheetApp.getUi();
-  const menu = ui.createMenu('Innovex');
+  const menu = ui.createMenu('Menu personalizado');
   menu.addItem('Funcionários', 'loadMainForm');
   menu.addToUi();
 
